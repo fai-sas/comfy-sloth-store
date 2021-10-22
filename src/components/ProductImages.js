@@ -1,8 +1,31 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-const ProductImages = () => {
-  return <h4>product images</h4>
+// images = [] means if images is undefined, set this to an empty array, so that we won't get any error
+
+//images = [{url: ''}] means if the images is undefined, there's going to be an array with empty object, and we'll set the url (images url) as empty string
+
+const ProductImages = ({ images = [{ url: '' }] }) => {
+  const [main, setMain] = useState(images[0])
+
+  return (
+    <Wrapper>
+      <img src={main.url} alt='main img' className='main' />
+      <div className='gallery'>
+        {images.map((image, index) => {
+          return (
+            <img
+              src={image.url}
+              alt='main img'
+              className={`${image.url === main.url ? 'active' : null}`}
+              key={index}
+              onClick={() => setMain(images[index])}
+            />
+          )
+        })}
+      </div>
+    </Wrapper>
+  )
 }
 
 const Wrapper = styled.section`
