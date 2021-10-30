@@ -18,9 +18,8 @@ const AddToCart = ({ product }) => {
 
       if (tempAmount > stock) {
         tempAmount = stock
-
-        return tempAmount
       }
+      return tempAmount
     })
   }
 
@@ -30,9 +29,8 @@ const AddToCart = ({ product }) => {
 
       if (tempAmount < 1) {
         tempAmount = 1
-
-        return tempAmount
       }
+      return tempAmount
     })
   }
 
