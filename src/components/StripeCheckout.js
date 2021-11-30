@@ -14,7 +14,7 @@ import { useUserContext } from '../context/user_context'
 import { formatPrice } from '../utils/helpers'
 import { useHistory } from 'react-router-dom'
 
-const promise = loadStripe(process.env.REACT_APP_STIPE_PUBLIC_KEY)
+const promise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY)
 
 const CheckoutForm = () => {
   const { cart, total_amount, shipping_fee, clearCart } = useCartContext()
@@ -52,11 +52,15 @@ const CheckoutForm = () => {
 
   const createPaymentIntent = async () => {
     try {
-      const data = await axios.post(
+      const { data } = await axios.post(
         '/.netlify/functions/create-payment-intent',
         JSON.stringify({ cart, shipping_fee, total_amount })
       )
-    } catch (error) {}
+
+      setClientSecret(data.clientSecret)
+    } catch (error) {
+      console.log(error.response)
+    }
   }
 
   useEffect(() => {
@@ -64,12 +68,55 @@ const CheckoutForm = () => {
     //eslint-disable-next-line
   }, [])
 
-  const handleChange = async (event) => {}
+  //handleChange from stripe
+  const handleChange = async (event) => {
+    setDisabled(event.empty)
+    setError(event.error ? event.error.message : '')
+  }
 
-  const handleSubmit = async (ev) => {}
+  const handleSubmit = async (ev) => {
+    ev.preventDefault()
+    setProcessing(true)
+
+    const payload = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: elements.getElement(CardElement),
+      },
+    })
+    if (payload.error) {
+      setError(`Payment failed ${payload.error.message}`)
+      setProcessing(false)
+    } else {
+      setError(null)
+      setProcessing(false)
+      setSucceeded(true)
+
+      //optional
+      setTimeout(() => {
+        clearCart()
+        history.push('/')
+      }, 10000)
+    }
+  }
 
   return (
     <div>
+      {succeeded ? (
+        <article>
+          <h4>Thank you</h4>
+          <h4>Your payment was successful!</h4>
+          <h4>Redirecting to home page shortly</h4>
+        </article>
+      ) : (
+        <article>
+          <h4>
+            Hello, {myUser && myUser.name}
+            <p>Your total is {formatPrice(shipping_fee + total_amount)} </p>
+            <p>Test Card Number : 4242 4242 4242 4242</p>
+          </h4>
+        </article>
+      )}
+
       {/* stripe */}
       <form id='payment-form' onSubmit={handleSubmit}>
         <CardElement
